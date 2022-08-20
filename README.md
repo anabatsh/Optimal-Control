@@ -1,6 +1,5 @@
 # Optimal-Control
 
+Простая задача на MINLPC (Mixed-Integer Nonlinear Model Predictive Control). Реализовано на [GEKKO](https://gekko.readthedocs.io/en/latest/).
 
-
-Пока что здесь лежат два ноутбука для двух разных питоновских пакетов: [control](https://python-control.readthedocs.io/en/latest/optimal.html) и [GEKKO](https://gekko.readthedocs.io/en/latest/).
 
