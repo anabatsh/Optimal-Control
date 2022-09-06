@@ -1,5 +1,5 @@
 # Optimal-Control
 
-Простая задача на MINLPC (Mixed-Integer Nonlinear Model Predictive Control). Реализовано на [GEKKO](https://gekko.readthedocs.io/en/latest/).
+Простая задача на MINLP (Mixed-Integer Nonlinear Programming). Реализовано на [GEKKO](https://gekko.readthedocs.io/en/latest/).
 
 
