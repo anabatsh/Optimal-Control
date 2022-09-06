@@ -1,5 +1,4 @@
 # Optimal-Control
 
-Простая задача на MINLP (Mixed-Integer Nonlinear Programming). Реализовано на [GEKKO](https://gekko.readthedocs.io/en/latest/).
-
+Simple MINLP (Mixed-Integer Nonlinear Programming) example. It is realized with [GEKKO](https://gekko.readthedocs.io/en/latest/).
 
