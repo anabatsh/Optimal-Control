@@ -47,9 +47,9 @@ $$
 \min\limits_{\textbf{x}, \textbf{i}}
 F(\textbf{x}, \textbf{i}), \quad
 \left\{ \begin{array}{l}
-x(t_0) = x_0 \\
-\dot{x}(t) = x^3(t) - i(t) \\
-\textbf{i} \in P \cap \mathbb{Z}^{N} \\
+    x(t_0) = x_0 \\
+    \dot{x}(t) = x^3(t) - i(t) \\
+    \textbf{i} \in P \cap \mathbb{Z}^{N} \\
 \end{array} \right. \\
 F(\textbf{x}, \textbf{i}) = 
 \frac{1}{2} \int\limits^{T}_{t_0} (x(t) - x_{ref})^2 dt \\
