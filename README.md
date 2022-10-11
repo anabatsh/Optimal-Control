@@ -43,13 +43,15 @@ What I plan to do:
 * There is a time-horizon
 
 $$
-\begin{gather*}
-\left\{ \begin{array}{l}
-    x(t_0) = x_0 \\
-    \dot{x}(t) = x^3(t) - i(t) \\
-    \textbf{i} \in P \cap \mathbb{Z}^{N} \\
-\end{array} \right. \\
-\end{gather*}
+\begin{split}
+F(\textbf{x}, \textbf{i}) = 
+\frac{1}{2} & \int\limits^{T}_{t_0} (x(t) - x_{ref})^2 dt  
+\rightarrow \min \\
+\text{such that:} \quad & x(t_0) = x_0 \\
+& \dot{x}(t) = x^3(t) - i(t) \\
+& \textbf{i} \in P \cap \mathbb{Z}^{N} \\
+& N = 30, \ x_0 = 0.8, \ x_{ref} = 0.7
+\end{split}
 $$
 
 Current results:
