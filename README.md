@@ -20,19 +20,19 @@ $$
 
 Current results:
 
-1. The algorithm (Gauss-Newton) has been implemented entirely. Everything works correctly. 
+* The algorithm (Gauss-Newton) has been implemented entirely. Everything works correctly. 
 
 
 
 Current bottlenecks:
 
-1. The GN algorithm doesn't work better than the existing method from GEKKO ([Branch and Bound](https://en.wikipedia.org/wiki/Branch_and_bound) based algorithm). 
+* The GN algorithm doesn't work better than the existing method from GEKKO ([Branch and Bound](https://en.wikipedia.org/wiki/Branch_and_bound) based algorithm). 
 
 
 
 What I plan to do:
 
-1. Find more different examples of the problem and try the method.
+* Find more different examples of the problem and try the method.
 
 ---
 
@@ -40,35 +40,21 @@ What I plan to do:
 
 * There is a time-horizon
 
-$$
-\min\limits_{\textbf{x}, \textbf{i}}
-F(\textbf{x}, \textbf{i}), \quad
-\text{such that} \;\;
-\left\{ \begin{array}{l}
-x(t_0) = x_0 \\
-\dot{x}(t) = x^3(t) - i(t) \\
-\textbf{i} \in P \cap \mathbb{Z}^{N} \\
-\end{array} \right. \\
-
-F(\textbf{x}, \textbf{i}) = 
-\frac{1}{2} \int\limits^{T}_{t_0} (x(t) - x_{ref})^2 dt \\
-
-N = 30, \ x_0 = 0.8, \ x_{ref} = 0.7
-$$
+<img src="/home/anabatsh/.config/Typora/typora-user-images/image-20221011161606032.png" alt="image-20221011161606032" style="zoom:67%;" />
 
 Current results:
 
-1. The first step (S1) of the tree-step GN algorithm has been implemented. 
+* The first step (S1) of the tree-step GN algorithm has been implemented. 
 
 
 
 Current bottlenecks:
 
-1. It's hard to extract multidimensional gradients of GEKKO-type functions for the second step (S2) .
+* It's hard to extract multidimensional gradients of GEKKO-type functions for the second step (S2) .
 
 
 
 What I plan to do:
 
-1. Compute each partial derivative independently. But how to do it correctly still doesn't clear enough. 
+* Compute each partial derivative independently. But how to do it correctly still doesn't clear enough. 
 
