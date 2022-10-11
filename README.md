@@ -1,4 +1,4 @@
-# Optimal-Control
+# Optimal Control
 
 There are two examples realized with [GEKKO](https://gekko.readthedocs.io/en/latest/):
 
@@ -10,12 +10,14 @@ There are two examples realized with [GEKKO](https://gekko.readthedocs.io/en/lat
 * State and control variables are the same
 
 $$
+\begin{gather*}
 \min\limits_{x_1, x_2, x_3, x_4}
 x_1 x_4 (x_1 + x_2 + x_3) + x_3 \\
 x_1 x_2 x_3 x_4 \geq 25 \\
 x^2_1 + x^2_2 + x^2_3 + x^2_4 = 40 \\
 1 \geq x_1, x_2, x_3, x_4 \geq 5 \\
 x_0 = (1, 5, 5, 1)
+\end{gather*}
 $$
 
 Current results:
@@ -41,6 +43,7 @@ What I plan to do:
 * There is a time-horizon
 
 $$
+\begin{gather*}
 \min\limits_{\textbf{x}, \textbf{i}}
 F(\textbf{x}, \textbf{i}), \quad
 \text{such that} \;\;
@@ -49,11 +52,10 @@ x(t_0) = x_0 \\
 \dot{x}(t) = x^3(t) - i(t) \\
 \textbf{i} \in P \cap \mathbb{Z}^{N} \\
 \end{array} \right. \\
-
 F(\textbf{x}, \textbf{i}) = 
 \frac{1}{2} \int\limits^{T}_{t_0} (x(t) - x_{ref})^2 dt \\
-
 N = 30, \ x_0 = 0.8, \ x_{ref} = 0.7
+\end{gather*}
 $$
 
 Current results:
