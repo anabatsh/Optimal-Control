@@ -46,7 +46,6 @@ $$
 \begin{gather*}
 \min\limits_{\textbf{x}, \textbf{i}}
 F(\textbf{x}, \textbf{i}), \quad
-\text{such that} \;\;
 \left\{ \begin{array}{l}
 x(t_0) = x_0 \\
 \dot{x}(t) = x^3(t) - i(t) \\
