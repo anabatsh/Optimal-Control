@@ -57,16 +57,16 @@ $$
 Current results:
 
 * The first step (S1) of the tree-step GN algorithm has been implemented. 
+* [UPD] The second and the third methods have been implemented.
+* Completed steps are substantiated theoretically. All the necessary calculations are attached.
 
 
 
 Current bottlenecks:
 
-* It's hard to extract multidimensional gradients of GEKKO-type functions for the second step (S2) .
+* The GN algorithm doesn't work better than the existing method from GEKKO.
 
 
 
 What I plan to do:
-
-* Compute each partial derivative independently. But how to do it correctly still doesn't clear enough. 
 
