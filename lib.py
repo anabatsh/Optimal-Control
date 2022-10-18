@@ -14,7 +14,8 @@ def run_optimal_control(
 #     h_f,            # final inequality constraint
     F,              # objective function
     integer=False,  # integrality flag
-    const=False,    # fixator 
+    const=False,    # fixator
+    const_i=None,   # fixed i value
     name=''         # name of the problem
 ):
     """
@@ -38,7 +39,10 @@ def run_optimal_control(
     u = m.Var(value=0.0, lb=0, ub=1, name='u')
     
     # Manipulated variable: integer
-    i = m.Var(value=0.0, integer=integer, lb=0, ub=1, name='i')
+    i = m.Var(value=0.0, integer=integer, lb=0, ub=1, name='i') 
+    if const:
+        for n in range(N+1):
+            m.fix(i, const_i[n], pos=n)
 
     # Controlled Variable
     x = m.Var(value=x_0, name='x')
