@@ -35,34 +35,47 @@ def run_optimal_control(
                             'minlp_gap_tol 0.01']
 
     # Manipulated variable: continuous
-    u = m.Var(value=0.5, lb=0, ub=1, name='u')
+    u = m.Var(value=0.0, lb=0, ub=1, name='u')
     
     # Manipulated variable: integer
-    i = m.Var(value=0.5, integer=integer, lb=0, ub=1, name='i')
+    i = m.Var(value=0.0, integer=integer, lb=0, ub=1, name='i')
 
     # Controlled Variable
     x = m.Var(value=x_0, name='x')
 
     # Equations
-    m.Equation(f(x, u, i) == 0) # f function
-    m.Equation(h(x, u, i) <= 0) # H function
-
+    f_var = m.Var(value=0.0, name='f_var')
+    h_var = m.Var(value=0.0, name='h_var')
+    m.Equation(f_var == x.dt() - f(x, u, i)) # f function
+    m.Equation(h_var == h(x, u, i)) # f function
+    m.Equation(f_var == 0)
+    m.Equation(h_var <= 0)
+    
     # Objective function
-    m.Obj(F(x - x_ref, u, i)) # F function
+    obj_var = m.Var(value=0.0, name='obj_var')
+    m.Equation(obj_var == F(x - x_ref, u, i)) # F function
+    m.Obj(obj_var) 
 
     m.options.IMODE = 6
     m.solve(disp=False)
     
     history = {}
-    with open(m.path+'//results.json') as f:
-        results = json.load(f)
+    with open(m.path+'//results.json') as file:
+        results = json.load(file)
+
     history['time'] = results['time']
+    
     history['x'] = results['x']
-    history['x_0'] = x_0
-    history['x_ref'] = x_ref
     history['u'] = results['u']
     history['i'] = results['int_i' if integer else 'i']
-    history['obj'] = m.options.OBJFCNVAL
+    
+    history['f'] = results['f_var']
+    history['h'] = results['h_var']
+    history['obj'] = results['obj_var']
+    
+    history['x_0'] = x_0
+    history['x_ref'] = x_ref
+    history['obj_final'] = m.options.OBJFCNVAL
     
     return history
 
@@ -73,36 +86,48 @@ def show_results(history):
     time = history['time']
     x_0 = history['x_0']
     x_ref = history['x_ref']
+    
     x = history['x']
     u = history['u']
     i = history['i']
+    
+    f = history['f']
+    h = history['h']
     obj = history['obj']
 
-    plt.figure(figsize=(10, 7))
-    plt.suptitle(f'Objective value: {obj:.4f}')
-    
-    plt.subplot(3, 1, 1)
-    plt.step(time, u, 'o-', 
-             markersize=5, linewidth=1.4,
-             where='post')
-    plt.xticks([])
-    plt.ylabel('Control u')
-    
-    plt.subplot(3, 1, 2)
-    plt.step(time, i, 'o-', 
-             markersize=5, linewidth=1.4,
-             where='post')
-    plt.xticks([])
-    plt.ylabel('Control i')
+    obj_final = history['obj_final']
 
-    plt.subplot(3, 1, 3)
-    plt.hlines(x_0, time[0], time[-1], colors='r', linestyles='dashed', label='initial')
-    plt.hlines(x_ref, time[0], time[-1], colors='g', linestyles='dashed', label='reference')
-    plt.plot(time, x, '-o', c='r',
-             markersize=5, linewidth=1,
-             label='predicted trajectory')
-    plt.legend(loc=4)
-    plt.ylabel('State x')
-    plt.xlabel('Time')
+    fig, axes = plt.subplots(3, 2, figsize=(15, 7), sharex=True)
+    plt.suptitle(f'Objective value: {obj_final:.4f}')
+    
+    axes[0][0].step(time[:-1], u[1:], 'o-', markersize=5, linewidth=1.4, where='post')
+    axes[0][0].grid()
+    axes[0][0].set_ylim(-0.1, 1.1)
+    axes[0][0].set_ylabel('Control u')
+    
+    axes[1][0].step(time[:-1], i[1:], 'o-', markersize=5, linewidth=1.4, where='post')
+    axes[1][0].grid()
+    axes[1][0].set_ylim(-0.1, 1.1)
+    axes[1][0].set_ylabel('Control i')
 
+    axes[2][0].hlines(x_0, time[0], time[-1], colors='r', linestyles='dashed', label='initial')
+    axes[2][0].hlines(x_ref, time[0], time[-1], colors='g', linestyles='dashed', label='reference')
+    axes[2][0].plot(time, x, '-o', c='r', markersize=5, linewidth=1, label='predicted trajectory')
+    axes[2][0].legend()
+    axes[2][0].grid()
+    axes[2][0].set_xticks(time)
+    axes[2][0].set_xticklabels(['' if i % 2 else t for i, t in enumerate(time)])
+    axes[2][0].set_ylabel('State x')
+    axes[2][0].set_xlabel('Time')
+    
+    axes[0][1].plot(time[:-1], f[1:])
+    axes[0][1].set_ylabel('Value f')
+    
+    axes[1][1].plot(time[:-1], h[1:])
+    axes[1][1].set_ylabel('Value h')
+
+    axes[2][1].plot(time[:-1], obj[1:])
+    axes[2][1].set_ylabel('Objective value')
+    axes[2][1].set_xlabel('Time')
+    
     plt.show()
