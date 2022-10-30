@@ -22,7 +22,7 @@ def run_optimal_control(
     """
     Function for MINL Optimal Control solving
     """
-    m = GEKKO()
+    m = GEKKO(remote=False)
     m.time = np.arange(N + 1) * time_step
 
     m.options.SOLVER = 1
@@ -52,9 +52,21 @@ def run_optimal_control(
     f_var = m.Var(value=0.0, name='f_var')
     h_var = m.Var(value=0.0, name='h_var')
     m.Equation(f_var == x.dt() - f(x, u, i)) # f function
-    m.Equation(h_var == h(x, u, i)) # f function
     m.Equation(f_var == 0)
+
+    m.Equation(h_var == h(x, u, i)) # f function
     m.Equation(h_var <= 0)
+    
+    # P polygon
+    a = m.Var()
+    b = m.Var()
+    c = m.Var()
+    m.delay(i, a, 1)
+    m.delay(i, b, 2)
+    m.delay(i, c, 3)
+
+    m.Equation(a - b - i <= 0)
+    m.Equation(a - c - i <= 0)
     
     # Objective function
     obj_var = m.Var(value=0.0, name='obj_var')
@@ -82,7 +94,7 @@ def run_optimal_control(
     
     history['x_0'] = x_0
     history['x_ref'] = x_ref
-    history['obj_final'] = m.options.OBJFCNVAL
+    history['obj_final'] = sum(history['obj']) # m.options.OBJFCNVAL
     
     return history
 
@@ -102,7 +114,7 @@ def run_optimal_control_dist(
     """
     Function for MI Quadratic Optimal Control solving
     """
-    m = GEKKO()
+    m = GEKKO(remote=False)
     m.time = np.arange(N + 1) * time_step
 
     m.options.SOLVER = 1
@@ -142,6 +154,17 @@ def run_optimal_control_dist(
     m.Equation(h_var == h_L((x, u, i), (x0, u0, i0)))
     m.Equation(f_var == 0)
     m.Equation(h_var <= 0)
+    
+    # P polygon
+    a = m.Var()
+    b = m.Var()
+    c = m.Var()
+    m.delay(i, a, 1)
+    m.delay(i, b, 2)
+    m.delay(i, c, 3)
+
+    m.Equation(a - b - i <= 0)
+    m.Equation(a - c - i <= 0)
 
     # Objective function
     m.Equation(obj_var == F_GN((x-x_ref, u, i), (x0, u0, i0)))
@@ -168,7 +191,7 @@ def run_optimal_control_dist(
 
     history['x_0'] = x_0
     history['x_ref'] = x_ref
-    history['obj_final'] = m.options.OBJFCNVAL
+    history['obj_final'] = sum(history['obj']) # m.options.OBJFCNVAL
 
     return history
 
@@ -254,15 +277,18 @@ def show_results(history):
     axes[2][0].set_ylabel('State x')
     axes[2][0].set_xlabel('Time')
     
-    axes[0][1].plot(time[:-1], f[1:])
+    axes[0][1].plot(time[:-1], f[1:], '-o')
     axes[0][1].set_ylabel('Value f')
+    axes[0][1].grid()
     
-    axes[1][1].plot(time[:-1], h[1:])
+    axes[1][1].plot(time[:-1], h[1:], '-o')
     axes[1][1].set_ylabel('Value h')
+    axes[1][1].grid()
 
-    axes[2][1].plot(time[:-1], obj[1:])
+    axes[2][1].plot(time[:-1], obj[1:], '-o')
     axes[2][1].set_ylabel('Objective value')
     axes[2][1].set_xlabel('Time')
+    axes[2][1].grid()
     
     plt.show()
     
@@ -275,8 +301,8 @@ def compare_final_obj(history_minlp, history_miqp):
     sign = 'positive' if diff > 0 else 'negative'
     resl = 'better' if diff > 0 else 'worse'
 
-    print(f'MIQP  solution: {obj_minlp:.5f}')
-    print(f'MINLP solution: {obj_miqp:.5f}')
+    print(f'MIQP  solution: {obj_miqp:.5f}')
+    print(f'MINLP solution: {obj_minlp:.5f}')
     print(f'Difference: {diff:.5f} - {sign} => MIQP is {resl} than MINLP')
     
 def compare_obj_trajectory(history_minlp, history_nlp, history_dist, history_miqp):
@@ -287,13 +313,10 @@ def compare_obj_trajectory(history_minlp, history_nlp, history_dist, history_miq
     plt.xlabel('Iteration')
     plt.ylabel('Value')
 
-    x_dist = len(history_nlp['obj']) - 1 + np.arange(len(history_dist['obj']))
-    x_miqp = x_dist[-1] + np.arange(len(history_miqp['obj']))
-
-    plt.plot(history_minlp['obj'], '-o', c='blue', label='minlp')
-    plt.plot(history_nlp['obj'], '-o', c='red', label='nlp')
-    plt.plot(x_dist, history_dist['obj'], '-o', c='orange', label='dist')
-    plt.plot(x_miqp, history_miqp['obj'], '-o', c='greenyellow', label='miqp')
+    plt.plot(history_minlp['obj'], c='blue', label='minlp')
+    plt.plot(history_nlp['obj'], c='red', label='nlp')
+#     plt.plot(history_dist['obj'], c='orange', label='dist')
+    plt.plot(history_miqp['obj'], c='greenyellow', label='miqp')
     plt.legend()
     
     plt.show()
@@ -310,15 +333,16 @@ def compare_var_trajectory(history_minlp, history_miqp):
     axes[0].set_ylim(-0.1, 1.1)
     axes[0].set_ylabel('Control u')
 
-    axes[1].step(time[:-1], history_minlp['i'][1:], 'o-', markersize=5, linewidth=1.4, where='post')
-    axes[1].step(time[:-1], history_miqp['i'][1:], 'o-', markersize=5, linewidth=1.4, where='post')
+    axes[1].step(time[:-1], history_minlp['i'][1:], 'o-', markersize=5, linewidth=1.4, where='post', label='MINLP')
+    axes[1].step(time[:-1], history_miqp['i'][1:], 'o-', markersize=5, linewidth=1.4, where='post', label='MIQP')
     axes[1].set_ylim(-0.1, 1.1)
     axes[1].set_ylabel('Control i')
+    axes[1].legend()
 
     # axes[2].hlines(x_0, time[0], time[-1], colors='r', linestyles='dashed', label='initial')
     # axes[2].hlines(x_ref, time[0], time[-1], colors='g', linestyles='dashed', label='reference')
-    axes[2].plot(time, history_minlp['x'], '-o', markersize=5, linewidth=1, label='predicted trajectory')
-    axes[2].plot(time, history_miqp['x'], '-o', markersize=5, linewidth=1, label='predicted trajectory')
+    axes[2].plot(time, history_minlp['x'], '-o', markersize=5, linewidth=1, label='MINLP pred.trajectory')
+    axes[2].plot(time, history_miqp['x'], '-o', markersize=5, linewidth=1, label='MIQP pred.trajectory')
     axes[2].legend()
     axes[2].set_ylabel('State x')
     axes[2].set_xlabel('Time')
