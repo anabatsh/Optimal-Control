@@ -59,7 +59,7 @@ def show_results(history):
 
     # -------------------------------------------------------------------------------------------
     axes[2][1].set_title('Objective function F')
-    axes[2][1].plot(time[:-1], F[1:], '-o')
+    axes[2][1].plot(time, F, '-o')
     axes[2][1].set_xlabel('Time')
     axes[2][1].grid()
     

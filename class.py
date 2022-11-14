@@ -6,41 +6,50 @@ import json
 from scipy import optimize
 
 
-def run_optimal_control(
-    x_0,            # initial state
-    x_ref,          # final reference state  
-    N,              # length of the time horizon
-    time_step,      # time step
-    f,              # differential equation
-    h,              # path inequality constraints
-    F,              # objective function
-    options=None,   # gekko solver options
-    integer=False,  # integrality flag
-    const=False,    # fixator
-    const_i=None,   # fixed i value
-    name=''         # name of the problem
-):
+class OptimalControl():
     """
-    Function for MINL Optimal Control solving
+    Class for MINL Optimal Control solving
     """
-    m = GEKKO(remote=False)
-    m.time = np.arange(N + 1) * time_step
-
-    m.options.SOLVER = 1 if integer else 3
-    if integer and options is not None:
-        m.solver_options = options
+    def __init__(self, x_0, x_ref, N, time_step,
+                 f, h, F, solver_options=None,
+                 integer_mode=False, 
+                 dist_mode=False, dist_kwargs=None,
+                 const_mode=False, const_kwargs=None,
+                 name=''):
         
-    # Manipulated variable: continuous
-    u = m.Var(value=0.0, lb=0, ub=1, name='u')
-    
-    # Manipulated variable: integer
-    i = m.Var(value=0.0, integer=integer, lb=0, ub=1, name='i') 
-    if const:
-        for n in range(1, N+1):
-            m.fix(i, const_i[n], pos=n)
+        self.time = np.arange(N + 1) * time_step
+        self.solver = 1 if integer_mode else 3
+        self.solver_options = solver_options
+        
+        self.f = f
+        self.h = h
+        self.F = F
+        
+    # ------------------------------------------
+    def init_gekko():
+        m = GEKKO(remote=False)
+        m.time = self.time
 
-    # Controlled Variable
-    x = m.Var(value=x_0, name='x')
+        m.options.SOLVER = self.solver
+        if self.solver_options is not None:
+            m.solver_options = self.solver_options
+
+        # Manipulated variable: continuous
+        u = m.Var(value=0.0, lb=0, ub=1, name='u')
+
+        # Manipulated variable: integer
+        i = m.Var(value=0.0, integer=integer, lb=0, ub=1, name='i')
+
+        # Controlled Variable
+        x = m.Var(value=x_0, name='x')
+        
+        return m
+    
+    
+    if const_mode:
+        for n in range(1, N+1):
+            m.fix(self.i, const_i[n], pos=n)
+
 
     # Equations
     f_var = m.Var(value=0.0, name='f_var')
@@ -188,50 +197,3 @@ def run_optimal_control_dist(
     history['obj_value'] = m.options.OBJFCNVAL
 
     return history
-    
-def linear(f, x, x0):
-    """
-    Linearization of the function f
-    """
-    f_ = lambda x: f(*x)
-    if type(x0[0]) == gekko.gk_variable.GKVariable:
-        x0 = [float(x0_i.value.__array__()) for x0_i in x0]
-    f_grad = optimize.approx_fprime(x0, f_, 1e-6)
-    delta = np.array(x) - np.array(x0)
-    return f_(x0) + f_grad @ delta
-
-def quadratic(f, x, x0, B):
-    """
-    Quadratization of the function f
-    """
-    f_linear = linear(f, x, x0)
-    if type(x0[0]) == gekko.gk_variable.GKVariable:
-        x0 = [float(x0_i.value.__array__()) for x0_i in x0]
-    delta = np.array(x) - np.array(x0)
-    return f_linear + 0.5 * delta.T @ B @ delta
-
-def b_gn(f, x, x0):
-    """
-    Gaussian-Newton Hessian approximation 
-    """
-    f_ = lambda x: f(*x)
-    if type(x0[0]) == gekko.gk_variable.GKVariable:
-        x0 = [float(x0_i.value.__array__()) for x0_i in x0]
-    f_grad = optimize.approx_fprime(x0, f_, 1e-6)
-    if f_grad.ndim == 2:
-        return f_grad.T @ f_grad
-    return np.outer(f_grad, f_grad)
-
-def pos_semidef(B):
-    """
-    Positive semidefinition checking 
-    """
-    return np.all(np.linalg.eigvals(B) >= 0)
-
-def gauss_newton(f, f1, x, x0):
-    """
-    Gauss-Newton method
-    """
-    B_GN = b_gn(f1, x, x0)
-#     print(f'Pos.semidef.: {pos_semidef(B_GN)}')
-    return quadratic(f, x, x0, B_GN)
