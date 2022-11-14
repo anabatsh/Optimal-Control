@@ -47,7 +47,7 @@ Lets note
 * $\textbf{u} = (u(0), u(1), \dots, u(N-1))$
 * $\textbf{i} = (i(0), i(1), \dots, i(N-1))$
 
-So we have **Mixed-Integer Optimal Control** problem ($\star$):
+So we have **Mixed-Integer Non Linear Optimal Control** problem ($\star$) in a general form:
 $$
 \min\limits_{\textbf{x}, \textbf{u}, \textbf{i}}
 {F(\textbf{x}, \textbf{u}, \textbf{i})}, \quad
@@ -86,9 +86,15 @@ The proposal algorithm consists of three steps:
 **S1**: solve the system without integrality constraint $\textbf{i} \in \mathbb{Z}^{n_i}$:
 $$
 (\textbf{x}^*, \textbf{u}^*, \textbf{i}^*) = \arg\min\limits_{\textbf{x, u, i}}{F(\textbf{x, u, i})}, \quad
-i \in P
+\left\{ \begin{array}{l}
+x(0) = x_0 \\
+x(k+1) = f(x(k), u(k), i(k)) \\
+h(x(k), u(k), i(k)) \leq 0, k < N \\
+h_f(x(N)) \leq 0 \\
+\textbf{i} \in P
+\end{array} \right.
 $$
-**S2**: approximate our continuous solution $(\textbf{x}^*, \textbf{u}^*, \textbf{i}^*)$ by an integer $(\textbf{x}^{**}, \textbf{u}^{**}, \textbf{i}^{**})$
+**S2**: approximate our continuous solution $\textbf{i}^*$ by an integer $\textbf{i}^{**}$
 
 But firstly denote for a notation simplification: (from the article)
 
@@ -120,36 +126,36 @@ So, after the first step (**S1**) we have a continuous solution $(\textbf{x}^*, 
 And we want to approximate the continuous solution $y^*$ by the integer solution $y^{**}$:
 $$
 y^{**} = \arg\min\limits_{y}{d(y, y^*)}, \quad
-y \in P \cup Z^{n_y}
+y \in P \cap \mathbb{Z}^{n_y}
 $$
 **Proposal Gauss-Newton algorithm**:
 
 $d(y, y^*) = J_{GN}(y \mid y^*, z^*) - J_{NLP}(y^*)$, where
 
-$J_{GN}(y \mid y^*, z^*) = J_{QP}(y \mid y^*, z^*, B_{GN}(y^*, z^*))$, where 
+* $J_{NLP}(y^*) = F(y^*, z^*)$
 
-$
-J_{QP}(y \mid y^*, z^*, B) =
-\min\limits_{z}{F_{QP}(y, z \mid y^*, z^*, B)}, \quad
-\left\{ \begin{array}{l}
-G_L(y, z \mid y^*, z^*) = 0 \\
-H_L(y, z \mid y^*, z^*) \leq 0 \\
-\end{array} \right.
-$ where
+* $
+  J_{GN}(y \mid y^*, z^*) =
+  \min\limits_{z}{F_{GN}(y, z \mid y^*, z^*)}, \quad
+  \left\{ \begin{array}{l}
+  G_L(y, z \mid y^*, z^*) = 0 \\
+  H_L(y, z \mid y^*, z^*) \leq 0 \\
+  \end{array} \right.$ 
+
+* $F_{GN}(y \mid y^*, z^*) = F_{QP}(y \mid y^*, z^*, B_{GN}(y^*, z^*))$
+* $
+  F_{QP}(y, z \mid y^*, z^*, B) = 
+  F_L(y, z \mid y^*, z^*) + 
+  \frac{1}{2} 
+  \begin{bmatrix} y - y^* \\ z - z^* \end{bmatrix}^T
+  B
+  \begin{bmatrix} y - y^* \\ z - z^* \end{bmatrix}
+  $
 
 * $
     B_{GN}(y^*, z^*) = 
     \frac{\partial F_1}{\partial (y, z)}(y^*, z^*)
     (\frac{\partial F_1}{\partial (y, z)}(y^*, z^*))^T
-  $
-
-* $
-    F_{QP}(y, z \mid y^*, z^*, B) = 
-    F_L(y, z \mid y^*, z^*) + 
-    \frac{1}{2} 
-    \begin{bmatrix} y - y^* \\ z - z^* \end{bmatrix}^T
-    B
-    \begin{bmatrix} y - y^* \\ z - z^* \end{bmatrix}
   $
 * $
    F_{L}(y, z \mid y^*, z^*) = 
@@ -167,11 +173,26 @@ $ where
    ((y, z) - (y^*, z^*))
   $
 
-
-
+So, the second step looks like this:
+$$
+(z^{**}, y^{**}) = 
+\arg\min\limits_{z, \ y}{F_{GN}(y, z \mid y^*, z^*)}, \quad
+\left\{ \begin{array}{l}
+G_L(y, z \mid y^*, z^*) = 0 \\
+H_L(y, z \mid y^*, z^*) \leq 0 \\
+y \in P \cap \mathbb{Z}^{n_y}
+\end{array} \right.
+$$
 **S3**: solve the NLP system with fixed variable $\textbf{i} = \textbf{i}^{**} = y^{**}$:
 $$
 (\textbf{x}^{***}, \textbf{u}^{***}, \textbf{i}^{**}) = \arg\min\limits_{\textbf{x, u}}{F(\textbf{x}, \textbf{u}, \textbf{i}^{**})}
+, \quad
+\left\{ \begin{array}{l}
+x(0) = x_0 \\
+x(k+1) = f(x(k), u(k), i^{**}(k)) \\
+h(x(k), u(k), i^{**}(k)) \leq 0, k < N \\
+h_f(x(N)) \leq 0 \\
+\end{array} \right.
 $$
 
 
@@ -185,9 +206,9 @@ Firstly lets rewrite MINLP ($\star$) and simplify it a little:
    * $\textbf{i} = (i(0), i(1), \dots, i(N))$
 2. Assume that $h_f(x(N)) = h(x(N), u(N), i(N))$.
 3. Assume that $V_f(x(N)) = l(x(N), u(N), i(N))$.
-4. Rewrite $F(\textbf{x}, \textbf{u}, \textbf{i})$ as a sum of $F(x(k), u(k), i(k))$, where $F(x, u, i) = \frac{1}{2} \|F_1(x, u, i)\|_2^2 + F_2(x, u, i)$.
+4. Rewrite $F(\textbf{x}, \textbf{u}, \textbf{i})$ as a sum of $F(x(k), u(k), i(k))$, where $F(x, u, i) = \frac{1}{2} \|F_1(x, u, i)\|_2^2 + F_2(x, u, i)$. Here we just denote $F(x, u, i) = l(x, u, i)$.
 
-Then our MINL problem looks like this
+Then our MINL optimal control problem looks like this
 $$
 \min\limits_{\textbf{x}, \textbf{u}, \textbf{i}}
 {F(\textbf{x}, \textbf{u}, \textbf{i})}, \quad
@@ -200,7 +221,7 @@ h(x(k), u(k), i(k)) \leqslant 0 \\
 $$
 where $F(\textbf{x}, \textbf{u}, \textbf{i}) = \sum\limits_{k=0}^{N} F(x(k), u(k), i(k))$ and $F(x, u, i) = \frac{1}{2} \|F_1(x, u, i)\|_2^2 + F_2(x, u, i)$.
 
-But in practice of working with GEKKO it will be better to return to an Optimal Control formulation:
+Now we should adapt the second step of the Gauss-Newton method for this case. In practice of working with GEKKO it will be better to use an original Optimal Control formulation ($\star \star \star$)
 $$
 \textbf{i}^{**} = 
 \arg\min\limits_{\textbf{i}}{
@@ -209,12 +230,21 @@ d(\textbf{i}, \textbf{i}^{*})
 \left\{ \begin{array}{l}
 x(0) = x_0 \\
 x(k+1) = f_L(x(k), u(k), i(k)) \\
-h_L(x(k), u(k), i(k)) \leq 0, k < N \\
-h_{fL}(x(N)) \leq 0 \\
+h_L(x(k), u(k), i(k)) \leqslant 0 \\
 \textbf{i} \in P \cap \mathbb{Z}^{N \cdot n_i}
 \end{array} \right.
 $$
-However, it's not clear, why we can replace functions depand of $\textbf{x},\textbf{u},\textbf{i}$ entirely by functions depand only of $(x(k), u(k), i(k))$ on each time step. But in the Appendix we prove that we can. 
+instead of the proposal Programming one ($\star \star$)
+$$
+(z^{**}, y^{**}) = 
+\arg\min\limits_{z, \ y}{F_{GN}(y, z \mid y^*, z^*)}, \quad
+\left\{ \begin{array}{l}
+G_L(y, z \mid y^*, z^*) = 0 \\
+H_L(y, z \mid y^*, z^*) \leq 0 \\
+y \in P \cap \mathbb{Z}^{n_y}
+\end{array} \right.
+$$
+Obtaining ($\star\star\star$) from ($\star \star$) contains in the Appendix. 
 
 
 
@@ -265,14 +295,6 @@ Some remarks:
 3. Firstly we will try $f(x, i) = x - i$ instead of $f(x, i) = x^3 - i$. Because in this case the Gauss-Newton system on the second step should be equal to the original system (linearization of $f$ is equal to $f$ if $f$ is a linear function initially and quadratic approximation of $F$ is equal to $F$ if $F$ is a quadratic function initially). 
 
 
-
-### Experiment 1
-
-
-
-
-
-## Example 2
 
 
 
