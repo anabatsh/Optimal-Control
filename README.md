@@ -66,7 +66,3 @@ Current bottlenecks:
 
 * The GN algorithm doesn't work better than the existing method from GEKKO.
 
-
-
-What I plan to do:
-
